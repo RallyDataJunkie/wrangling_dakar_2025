@@ -33,7 +33,7 @@ jobs:
           python -m pip install jupyter-book
           jupyter-book build ./src
           mkdir -p ./dist/book
-          cp -r ./_build/html ./dist/book
+          cp -r ./src/_build/html ./dist/book
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
