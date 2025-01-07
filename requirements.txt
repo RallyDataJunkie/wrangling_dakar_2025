@@ -1,0 +1,8 @@
+# Core modules (mandatory)
+jupyterlite-core~=0.4.5
+jupyterlab~=4.2.5
+notebook~=7.2.2
+anywidget
+
+# KERNELS
+jupyterlite-xeus

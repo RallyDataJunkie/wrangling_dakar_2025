@@ -1,0 +1,12 @@
+# Table of contents file
+
+format: jb-book
+root: preface
+
+parts:
+- caption: Getting Started
+  chapters:
+  - file: setting_up_an_environment
+- caption: Getting the Data
+  chapters:
+  - file: teams_and_drivers

@@ -1,0 +1,15 @@
+title: Wrangling Dakar Rally Data
+author: A. J. Hirst
+
+lang: en
+
+only_build_toc_files: true
+
+#sphinx:
+#  config:
+#    myst_heading_anchors: 3
+
+
+parse:
+  myst_enable_extensions:
+    - colon_fence
