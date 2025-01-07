@@ -33,6 +33,7 @@ jobs:
           python -m pip install jupyter-book
           cd src
           jupyter-book build .
+          mkdir -p ./dist/book
           cp -r ./_build/html ./dist/book
 
       - name: Upload artifact
