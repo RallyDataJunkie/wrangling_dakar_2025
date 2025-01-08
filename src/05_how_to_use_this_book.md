@@ -10,4 +10,4 @@ At the time of writing (January, 2025) I have no idea how long the data feeds re
 
 *You might also note that this book is made freely available, but that paid for copies may also be able available. If you see one, and if you can afford it, please buy a copy, but bear in mind that other parties will take a significamt share. More directly, consider me a busker, [tip me the price of a coffee via PayPal \*](https://www.paypal.com/donate/?hosted_button_id=S8GLZUB89WFPS). If I can make any pennies at all from doing things like this, then I can spend more time doing things like this. So if you value it, please consider paying something for it.*
 
-\* Busker's hat: `https://www.paypal.com/donate/?hosted_button_id=S8GLZUB89WFPS`
+\* Busker's hat: [`https://www.paypal.com/donate/?hosted_button_id=S8GLZUB89WFPS`](https://www.paypal.com/donate/?hosted_button_id=S8GLZUB89WFP)
