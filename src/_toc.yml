@@ -17,4 +17,4 @@ parts:
   - file: 14_stages
   - file: 15_withdrawals
   - file: 16_waypoints
-  - file: 18_allScore_results
+  - file: 18_lastScore_results
