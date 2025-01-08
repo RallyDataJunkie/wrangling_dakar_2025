@@ -24,6 +24,7 @@ jobs:
 
       - name: Build the JupyterLite site
         run: |
+          mkdir -p ./content
           cp README.md content
           cp ./src/*.ipynb ./content/
           jupyter lite build --contents content --output-dir dist
