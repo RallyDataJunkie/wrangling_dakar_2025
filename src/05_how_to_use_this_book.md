@@ -1,0 +1,13 @@
+# How To Use This Book
+
+This book, or guide, or whatever it is, is written in a narrative form, telling the tale of how we might go about getting data from a website, putting it into a form we cam make use of it, reshaping it so we can generate visualisations from it, and learning how to read it so we can identify some of the stories that are identifiable from the trails they have left behind on the data.
+
+What this book, or guide, or whatever it is, is *not*, is a text book or a manual. Nor is it a structured course in how to learn to code in Python, wrangle data using the Python *pandas* package, generate charts and other data visualisations using `matplotlib`, `seaborn` or `plotnine`/*Grammar of Graphics* packages, create normalised databases or write database queries using SQL.
+
+That said, it does cover a lot of ground in how to use *pandas*, SQL and various charting packages and techniques to get stuff done when working with Dakar Rally data. Where tricks, or techniques, or particular coding packages or patterns are used for the first time, I will try to make a note of it to bring it to your attention. And then typically "assume it" if we happen to have need of it again later on. For that reason, this book, or guide, or whatever it is, is perhaps best read in a linear form, as some sort of developmental story or learning journey diary. But you can also dip into it, and hopefully make enough sense of any particular part to be able to take what's there and apply it, and perhaps tweak it to make it do what you want it to do, even if it didn't do it originally.
+
+At the time of writing (January, 2025) I have no idea how long the data feeds referred to will remain available. They may even stop working at the conclusion of the event. I will attempt to make a copy of the database containing the data scraped using the recipes described in these pages available, along with a database of the original data feeds. If I remember. In that way, this work will continue to work as a work using local data sources if nothing else.
+
+*You might also note that this book is made freely available, but that paid for copies may also be able available. If you see one, and if you can afford it, please buy a copy, but bear in mind that other parties will take a significamt share. More directly, consider me a busker, [tip me the price of a coffee via PayPal \*](https://www.paypal.com/donate/?hosted_button_id=S8GLZUB89WFPS). If I can make any pennies at all from doing things like this, then I can spend more time doing things like this. So if you value it, please consider paying something for it.*
+
+\* Busker's hat: `https://www.paypal.com/donate/?hosted_button_id=S8GLZUB89WFPS`

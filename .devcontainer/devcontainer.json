@@ -18,7 +18,7 @@
     },
 
     // Install dependencies and Jupyter
-    "postCreateCommand": "pip install --user ipykernel jupyter requests pandas numpy matplotlib seaborn scikit-learn plotnine folium",
+    "postCreateCommand": "pip install --user ipykernel jupyter jupyterlab requests pandas numpy matplotlib seaborn scikit-learn plotnine folium",
 
     "forwardPorts": [],
 
@@ -29,7 +29,5 @@
 
     // Add more features if needed
     "features": {
-        "git": "latest",
-        "github-cli": "latest"
     }
 }
