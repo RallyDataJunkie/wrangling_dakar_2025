@@ -1,4 +1,4 @@
-# How To Use This Book
+# How To Use This Book
 
 This book, or guide, or whatever it is, is written in a narrative form, telling the tale of how we might go about getting data from a website, putting it into a form we cam make use of it, reshaping it so we can generate visualisations from it, and learning how to read it so we can identify some of the stories that are identifiable from the trails they have left behind on the data.
 
