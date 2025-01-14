@@ -51,7 +51,9 @@ CATEGORY_TEMPLATE = "category-{year}"
 GROUPS_TEMPLATE = "allGroups-{year}"
 CLAZZ_TEMPLATE = "allClazz-{year}-{category}"
 WITHDRAWAL_TEMPLATE = "withdrawal-{year}-{category}"
+STAGE_TEMPLATE = "stage-{year}-{category}"
 WAYPOINT_TEMPLATE = "waypoint-{year}-{category}-{stage}"
+
 
 # Define some defaults
 YEAR = 2025
@@ -146,3 +148,115 @@ def get_withdrawals(year=YEAR, category=CATEGORY):
     withdrawn_competitors_df.sort_values(by=["bib"], inplace=True)
 
     return withdrawals_df, withdrawn_competitors_df, withdrawn_teams_df
+
+
+def get_stages(year=YEAR, category=CATEGORY):
+    """
+    Get stages information (start time, surfaces, sections).
+    """
+    def flatten_grounds_data(df):
+        """
+        Flatten nested grounds data into a wide DataFrame format.
+
+        Parameters:
+        df (pandas.DataFrame): DataFrame with 'grounds' and 'id' columns where grounds contains nested dictionary data
+
+        Returns:
+        pandas.DataFrame: Flattened DataFrame with one row per section
+        """
+
+        # Create empty lists to store flattened data
+        flattened_data = []
+        percentage_data = []
+        surface_types = []
+        _surface_types = []
+
+        # Sort by stage sector
+        df.sort_values("code", inplace=True)
+
+        # Create a mapping for translations
+        for _, row in df.iterrows():
+            ground_data = row['grounds']
+
+            # Create a translations dictionary
+            translations = {f"text_{lang['locale']}": lang['text']
+                            for lang in ground_data['groundLangs']}
+
+            _stype = translations["text_en"].lower()
+
+            percentage_data.append(
+                {'code': row['code'],
+                'percentage': ground_data['percentage'],
+                # 'ground_name': ground_data['name'],
+                'color': ground_data['color'], "type": _stype})
+
+            if _stype not in _surface_types:
+                _surface_types.append(_stype)
+                surface_types.append({"type": _stype, **translations})
+
+            # Create a record for each section
+            for section in ground_data['sections']:
+                section_record = {
+                    'code': row['code'],
+                    'ground_name': ground_data['name'],
+                    'section': section['section'],
+                    'start': section['start'],
+                    'finish': section['finish'],
+                    'color': ground_data['color'],
+                    # 'percentage': ground_data['percentage'],
+                    "type": _stype
+                }
+                flattened_data.append(section_record)
+
+        # Create DataFrame from flattened data
+        section_df = pd.DataFrame(flattened_data)
+        percentage_df = pd.DataFrame(percentage_data)
+        surfaces_df = pd.DataFrame(surface_types)
+
+        # Sort columns for better organization
+        # Ignore: 'percentage', 'ground_name',
+        fixed_columns = ['code',  'section', 'start', 'finish',
+                        'color', "type"]
+        lang_columns = [
+            col for col in section_df.columns if col.startswith('text_')]
+        section_df = section_df[fixed_columns + sorted(lang_columns)]
+
+        # Drop duplicates if any still exist
+        section_df = section_df.drop_duplicates()
+        section_df = section_df.sort_values(
+            ['code', 'section'])
+        section_df.reset_index(drop=True, inplace=True)
+
+        return section_df, percentage_df, surfaces_df
+
+
+    stage_url = DAKAR_API_TEMPLATE.format(
+        path=STAGE_TEMPLATE.format(year=year, category=category))
+
+    stage_df = pd.read_json(furl(stage_url))
+
+    # Create a dummy colum to match on
+    stage_df["variable"] = "stage.name." + stage_df["code"]
+
+    # Update the dataframe by using our new function to
+    # merge in the exploded and widenened language labels
+    stage_df = mergeInLangLabels(stage_df, "stageLangs", key="variable")
+
+    sectors_df = pd.json_normalize(stage_df["sectors"].explode())
+
+    # Get the sectors with grounds data
+    competitive_sectors = sectors_df[['grounds', 'code']].dropna(
+        axis="index").explode('grounds').reset_index(drop=True)
+
+    # Simplify the sectors dataframe
+    sectors_df = sectors_df[["powerStage", "code", "id",
+                             "length", "startTime", "type", "arrivalTime"]]
+
+    # Sort sectors by stage and sector
+    sectors_df.sort_values("code", inplace=True)
+    sectors_df.reset_index(drop=True, inplace=True)
+
+    section_surfaces, stage_surfaces, surfaces = flatten_grounds_data(
+    competitive_sectors)
+
+    return sectors_df, stage_surfaces, section_surfaces, surfaces

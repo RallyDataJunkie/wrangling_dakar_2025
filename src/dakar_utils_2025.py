@@ -18,15 +18,15 @@ def mergeInLangLabels(df, col, key="shortLabel"):
     # the locale to column names using text values, and using
     # the category (variable) as the row index.
     wideLabels = longLabels.pivot(
-                    index='variable',
-                    columns='locale',
-                    values='text',
-                    ).reset_index()
-    
+        index='variable',
+        columns='locale',
+        values='text',
+    ).reset_index()
+
     # Merge the data back in to the original dataframe
     _df = pd.merge(df, wideLabels,
-             left_on=key, right_on='variable')
-    
+                   left_on=key, right_on='variable')
+
     # Tidy up the dataframe by dropping the now redundant columns
     _df.drop("variable", axis=1, inplace=True)
     # If we pass in a column named "variable" trying to drop it

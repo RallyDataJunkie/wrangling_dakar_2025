@@ -17,4 +17,9 @@ parts:
   - file: 14_stages
   - file: 15_withdrawals
   - file: 16_waypoints
-  - file: 18_lastScore_results
+  - file: 17_lastScore_results
+  - file: 18_datagrabbers
+
+- caption: Using the Data
+  chapters:
+  - file: 24_visualising_stage_surfaces
