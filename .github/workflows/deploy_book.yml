@@ -27,8 +27,8 @@ jobs:
           mkdir -p ./content
           cp README.md content
           cp ./src/*.ipynb ./content/
-          cp -r images/ content/
-          cp -r dakar_rallydj/ content/
+          cp -r src/images/ content/
+          cp -r src/dakar_rallydj/ content/
           jupyter lite build --contents content --output-dir dist
           touch ./dist/.nojekyll
   
