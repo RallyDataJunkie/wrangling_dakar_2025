@@ -241,15 +241,28 @@ def get_stages(year=YEAR, category=CATEGORY):
     # Update the dataframe by using our new function to
     # merge in the exploded and widenened language labels
     stage_df = mergeInLangLabels(stage_df, "stageLangs", key="variable")
+    stage_df['stage_code'] = stage_df['code']
+    stage_df.sort_values("startDate", inplace=True)
+    stage_df.reset_index(drop=True, inplace=True)
 
-    sectors_df = pd.json_normalize(stage_df["sectors"].explode())
+    sectors_df = pd.json_normalize(stage_df[ "sectors"].explode())
+    # Generate a stage code
+    sectors_df['stage_code'] = sectors_df['code'].str[:2] + '000'
+    # And a sector number
+    sectors_df['sector_number'] = sectors_df.groupby('stage_code').cumcount() + 1
+
+    # Simplify and tidy the "top-level" stages dataframe
+    stage_cols = ['stage_code', 'stage', 'date', 'startDate', 'endDate', 'isCancelled', 'generalDisplay', 'isDelayed', 'marathon',
+                'length', 'type',  'timezone', 'stageWithBonus', 'mapCategoryDisplay', 'podiumDisplay', '_bind', 'ar', 'en', 'es', 'fr']
+    stage_df = stage_df[stage_cols]
+
 
     # Get the sectors with grounds data
     competitive_sectors = sectors_df[['grounds', 'code']].dropna(
         axis="index").explode('grounds').reset_index(drop=True)
 
     # Simplify the sectors dataframe
-    sectors_df = sectors_df[["powerStage", "code", "id",
+    sectors_df = sectors_df[["stage_code", "code", "id", "sector_number",  "powerStage",
                              "length", "startTime", "type", "arrivalTime"]]
 
     # Sort sectors by stage and sector
@@ -259,4 +272,4 @@ def get_stages(year=YEAR, category=CATEGORY):
     section_surfaces, stage_surfaces, surfaces = flatten_grounds_data(
     competitive_sectors)
 
-    return sectors_df, stage_surfaces, section_surfaces, surfaces
+    return stage_df, sectors_df, stage_surfaces, section_surfaces, surfaces
