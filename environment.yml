@@ -14,7 +14,7 @@ dependencies:
   - seaborn
   - scikit-learn
   - folium
+  - fastparquet
   - pip:
     - jupyterlite-simple-cors-proxy
     - montydb
-    - fastparquet
