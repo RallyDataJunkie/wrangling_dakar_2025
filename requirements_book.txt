@@ -10,3 +10,4 @@ scikit-learn
 folium
 jupyterlite-simple-cors-proxy
 montydb
+fastparquet

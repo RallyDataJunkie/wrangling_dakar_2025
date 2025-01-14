@@ -17,3 +17,4 @@ dependencies:
   - pip:
     - jupyterlite-simple-cors-proxy
     - montydb
+    - fastparquet
