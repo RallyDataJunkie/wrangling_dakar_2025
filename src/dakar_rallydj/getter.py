@@ -54,7 +54,6 @@ WITHDRAWAL_TEMPLATE = "withdrawal-{year}-{category}"
 STAGE_TEMPLATE = "stage-{year}-{category}"
 WAYPOINT_TEMPLATE = "waypoint-{year}-{category}-{stage}"
 
-
 # Define some defaults
 YEAR = 2025
 CATEGORY = "A"
@@ -80,15 +79,31 @@ def get_groups(year=YEAR):
     groups_df.sort_values(by=["_origin", "position"], inplace=True)
     return groups_df
 
-def get_clazz(year=YEAR, category=CATEGORY):
+
+def _get_clazz(year=YEAR, category=CATEGORY):
     clazz_url = DAKAR_API_TEMPLATE.format(
         path=CLAZZ_TEMPLATE.format(year=year, category=category))
     clazz_df = pd.read_json(furl(clazz_url))
     clazz_df = mergeInLangLabels(clazz_df, "categoryClazzLangs")
-    _coldropper(clazz_df, ["liveDisplay", "updatedAt",
-                "_origin", "_gets", "categoryGroupLangs", "_key", "_updatedAt"])
+    clazz_df['category'] = category
+    clazz_df['categoryClazz'] = clazz_df["_origin"].str.replace(
+        "categoryClazz-", "")
+    _coldropper(clazz_df, ["liveDisplay", "updatedAt", "_origin",
+                "_gets", "categoryGroupLangs", "_key", "_updatedAt"])
     clazz_df.sort_values(by=["shortLabel"], inplace=True)
     return clazz_df
+
+
+def get_clazz(year=YEAR, category=CATEGORY):
+    """
+    Get clazz data for one or more categories.
+    """
+    if isinstance(category, str):
+        category = [category]
+    dfs = [_get_clazz(year, c)
+           for c in category]
+    return pd.concat(dfs, ignore_index=True).reset_index(drop=True)
+
 
 def get_waypoints(year=YEAR, category=CATEGORY, stage=STAGE):
     waypoint_url = DAKAR_API_TEMPLATE.format(
@@ -101,12 +116,13 @@ def get_waypoints(year=YEAR, category=CATEGORY, stage=STAGE):
     waypoint_df["stage"] = STAGE
     waypoint_df["Category"] = CATEGORY
     waypoint_df["stage_code"] = stage_code
-    
+
     _coldropper(waypoint_df, ["isFirstDss"])
     waypoint_df.sort_values(by=["stage", "checkpoint"], inplace=True)
     return waypoint_df
 
-def get_withdrawals(year=YEAR, category=CATEGORY):
+
+def _get_withdrawals(year=YEAR, category=CATEGORY):
     withdrawals_url = DAKAR_API_TEMPLATE.format(
         path=WITHDRAWAL_TEMPLATE.format(year=year, category=category))
     withdrawal_df = pd.read_json(furl(withdrawals_url))
@@ -138,16 +154,46 @@ def get_withdrawals(year=YEAR, category=CATEGORY):
     withdrawn_teams_df = withdrawals_by_stage_df[team_cols].copy()
     withdrawn_teams_df.drop("team.competitors", axis=1, inplace=True)
     withdrawn_teams_df.sort_values(by=["team.bib"], inplace=True)
+    withdrawn_teams_df.reset_index(drop=True, inplace=True)
 
     withdrawals_df = withdrawn_competitors_df[[
-        "stage", "bib", "reason", "name"]].copy()
+        "stage", "bib", "reason"]].drop_duplicates()
+    withdrawals_df['_category'] = category
     withdrawals_df.sort_values(by=["stage", "reason"], inplace=True)
+    withdrawals_df.reset_index(drop=True, inplace=True)
 
     withdrawn_competitors_df.drop("stage", axis=1, inplace=True)
     withdrawn_competitors_df.drop("reason", axis=1, inplace=True)
     withdrawn_competitors_df.sort_values(by=["bib"], inplace=True)
+    withdrawn_competitors_df.reset_index(drop=True, inplace=True)
 
     return withdrawals_df, withdrawn_competitors_df, withdrawn_teams_df
+
+
+def get_withdrawals(year=YEAR, category=CATEGORY):
+    """
+    Get withdrawals data for one or more categories.
+    """
+    if isinstance(category, str):
+        category=[category]
+
+    # Initialize lists to store DataFrames
+    df_list1, df_list2, df_list3=[], [], []
+
+    for _category in category:
+        df1, df2, df3=_get_withdrawals(year=year, category=_category)
+        df_list1.append(df1)
+        df_list2.append(df2)
+        df_list3.append(df3)
+
+    # Concatenate the DataFrames for each type
+    combined_df1=pd.concat(df_list1, ignore_index=True).sort_values(["stage","bib","reason"]).reset_index(drop=True)
+    combined_df2 = pd.concat(df_list2, ignore_index=True).sort_values(
+        [ "bib"]).reset_index(drop=True)
+    combined_df3 = pd.concat(df_list3, ignore_index=True).sort_values(
+        ["team.bib"]).reset_index(drop=True)
+
+    return combined_df1, combined_df2, combined_df3
 
 
 def get_stages(year=YEAR, category=CATEGORY):
@@ -166,23 +212,23 @@ def get_stages(year=YEAR, category=CATEGORY):
         """
 
         # Create empty lists to store flattened data
-        flattened_data = []
-        percentage_data = []
-        surface_types = []
-        _surface_types = []
+        flattened_data=[]
+        percentage_data=[]
+        surface_types=[]
+        _surface_types=[]
 
         # Sort by stage sector
         df.sort_values("code", inplace=True)
 
         # Create a mapping for translations
         for _, row in df.iterrows():
-            ground_data = row['grounds']
+            ground_data=row['grounds']
 
             # Create a translations dictionary
-            translations = {f"text_{lang['locale']}": lang['text']
+            translations={f"text_{lang['locale']}": lang['text']
                             for lang in ground_data['groundLangs']}
 
-            _stype = translations["text_en"].lower()
+            _stype=translations["text_en"].lower()
 
             percentage_data.append(
                 {'code': row['code'],
@@ -196,7 +242,7 @@ def get_stages(year=YEAR, category=CATEGORY):
 
             # Create a record for each section
             for section in ground_data['sections']:
-                section_record = {
+                section_record={
                     'code': row['code'],
                     'ground_name': ground_data['name'],
                     'section': section['section'],
@@ -209,67 +255,77 @@ def get_stages(year=YEAR, category=CATEGORY):
                 flattened_data.append(section_record)
 
         # Create DataFrame from flattened data
-        section_df = pd.DataFrame(flattened_data)
-        percentage_df = pd.DataFrame(percentage_data)
-        surfaces_df = pd.DataFrame(surface_types)
+        section_df=pd.DataFrame(flattened_data)
+        percentage_df=pd.DataFrame(percentage_data)
+        surfaces_df=pd.DataFrame(surface_types)
 
         # Sort columns for better organization
         # Ignore: 'percentage', 'ground_name',
-        fixed_columns = ['code',  'section', 'start', 'finish',
+        fixed_columns=['code',  'section', 'start', 'finish',
                         'color', "type"]
-        lang_columns = [
+        lang_columns=[
             col for col in section_df.columns if col.startswith('text_')]
-        section_df = section_df[fixed_columns + sorted(lang_columns)]
+        section_df=section_df[fixed_columns + sorted(lang_columns)]
 
         # Drop duplicates if any still exist
-        section_df = section_df.drop_duplicates()
-        section_df = section_df.sort_values(
+        section_df=section_df.drop_duplicates()
+        section_df=section_df.sort_values(
             ['code', 'section'])
         section_df.reset_index(drop=True, inplace=True)
 
         return section_df, percentage_df, surfaces_df
 
 
-    stage_url = DAKAR_API_TEMPLATE.format(
+    stage_url=DAKAR_API_TEMPLATE.format(
         path=STAGE_TEMPLATE.format(year=year, category=category))
 
-    stage_df = pd.read_json(furl(stage_url))
+    stage_df=pd.read_json(furl(stage_url))
 
     # Create a dummy colum to match on
-    stage_df["variable"] = "stage.name." + stage_df["code"]
+    stage_df["variable"]="stage.name." + stage_df["code"]
 
     # Update the dataframe by using our new function to
     # merge in the exploded and widenened language labels
-    stage_df = mergeInLangLabels(stage_df, "stageLangs", key="variable")
-    stage_df['stage_code'] = stage_df['code']
+    stage_df=mergeInLangLabels(stage_df, "stageLangs", key="variable")
+    stage_df['stage_code']=stage_df['code']
     stage_df.sort_values("startDate", inplace=True)
     stage_df.reset_index(drop=True, inplace=True)
 
-    sectors_df = pd.json_normalize(stage_df[ "sectors"].explode())
+    sectors_df=pd.json_normalize(stage_df["sectors"].explode())
     # Generate a stage code
-    sectors_df['stage_code'] = sectors_df['code'].str[:2] + '000'
+    sectors_df['stage_code']=sectors_df['code'].str[:2] + '000'
     # And a sector number
-    sectors_df['sector_number'] = sectors_df.groupby('stage_code').cumcount() + 1
+    sectors_df['sector_number']=sectors_df.groupby('stage_code').cumcount() + 1
 
     # Simplify and tidy the "top-level" stages dataframe
-    stage_cols = ['stage_code', 'stage', 'date', 'startDate', 'endDate', 'isCancelled', 'generalDisplay', 'isDelayed', 'marathon',
+    stage_cols=['stage_code', 'stage', 'date', 'startDate', 'endDate', 'isCancelled', 'generalDisplay', 'isDelayed', 'marathon',
                 'length', 'type',  'timezone', 'stageWithBonus', 'mapCategoryDisplay', 'podiumDisplay', '_bind', 'ar', 'en', 'es', 'fr']
-    stage_df = stage_df[stage_cols]
+    stage_df=stage_df[stage_cols]
 
 
     # Get the sectors with grounds data
-    competitive_sectors = sectors_df[['grounds', 'code']].dropna(
+    competitive_sectors=sectors_df[['grounds', 'code']].dropna(
         axis="index").explode('grounds').reset_index(drop=True)
 
     # Simplify the sectors dataframe
-    sectors_df = sectors_df[["stage_code", "code", "id", "sector_number",  "powerStage",
+    sectors_df=sectors_df[["stage_code", "code", "id", "sector_number",  "powerStage",
                              "length", "startTime", "type", "arrivalTime"]]
 
     # Sort sectors by stage and sector
     sectors_df.sort_values("code", inplace=True)
     sectors_df.reset_index(drop=True, inplace=True)
 
-    section_surfaces, stage_surfaces, surfaces = flatten_grounds_data(
+    section_surfaces, stage_surfaces, surfaces=flatten_grounds_data(
     competitive_sectors)
 
     return stage_df, sectors_df, stage_surfaces, section_surfaces, surfaces
+
+
+def derive_clazz_metadata(withdrawn_teams_df, clazz_df, groups_df):
+    clazz_map_df=pd.merge(withdrawn_teams_df[["team.bib", "team.clazz"]], clazz_df[[
+                        "_id", "reference", "categoryClazz", "en"]], left_on="team.clazz", right_on="_id").drop(columns=["team.clazz", "_id"]).rename(columns={"en": "clazz_label"})
+
+    clazz_map_df=pd.merge(clazz_map_df, groups_df[["reference", "tinyLabel", "label", "color", "en"]].rename(
+        columns={"reference": "categoryClazz"}), on="categoryClazz").rename(columns={"en": "group_label"})
+
+    return clazz_map_df
