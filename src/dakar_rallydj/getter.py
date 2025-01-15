@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import Optional, Union, List, Tuple
-from jupyterlite_simple_cors_proxy.proxy import CorsProxy, create_cached_proxy
+from jupyterlite_simple_cors_proxy.cacheproxy import CorsProxy, create_cached_proxy
 
 
 class DakarAPIClient:

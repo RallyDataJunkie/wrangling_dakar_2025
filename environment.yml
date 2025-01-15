@@ -18,3 +18,7 @@ dependencies:
     - jupyterlite-simple-cors-proxy
     - montydb
     - requests-cache
+    - attrs
+    - cattrs
+    - platformdirs
+    - url-normalize
