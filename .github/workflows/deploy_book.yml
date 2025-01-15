@@ -46,7 +46,7 @@ jobs:
 
 #      - name: Build the Voici site
 #        shell: bash -l {0}
-#        run: voici build --contents content/72_stage_surfaces-dashboard.ipynb --output-dir dist/voici
+#        run: voici build --contents content/72_stage_surfaces-dashboard.ipynb --output-dir ./dist/voici
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
