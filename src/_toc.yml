@@ -19,7 +19,9 @@ parts:
   - file: 16_waypoints
   - file: 17_lastScore_results
   - file: 18_datagrabbers
+  - file: 21_enrichers
 
 - caption: Using the Data
   chapters:
-  - file: 24_visualising_stage_surfaces
+  - file: 33_visualising_stage_surfaces
+  - file: 34_visualising_withdrawals
