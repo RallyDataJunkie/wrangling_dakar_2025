@@ -38,6 +38,10 @@ jobs:
           jupyter-book build ./src
           mkdir -p ./dist/book
           cp -r ./src/_build/html/* ./dist/book/
+      - name: Build the Jupyter Book site
+        run: |
+          mkdir -p ./dist/voici
+          voici build --contents content/*-dashboard.ipynb --output-dir dist/voici
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
