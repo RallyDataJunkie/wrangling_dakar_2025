@@ -18,7 +18,7 @@
     },
 
     // Install dependencies and Jupyter
-    "postCreateCommand": "pip install --user ipykernel jupyter jupyterlab requests requests-cache pandas numpy matplotlib seaborn scikit-learn plotnine folium jupyterlite-simple-cors-proxy montydb",
+    "postCreateCommand": "pip install --user ipykernel jupyter jupyterlab requests requests-cache pandas numpy matplotlib seaborn scikit-learn plotnine folium jupyterlite-simple-cors-proxy montydb sqlite-utils",
 
     "forwardPorts": [],
 
