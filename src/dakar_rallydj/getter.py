@@ -90,31 +90,29 @@ class DakarAPIClient:
         competitors_df = (
             df[['team.bib', 'team.competitors']]
             .explode('team.competitors')
-            .rename(columns={'team.bib': 'team_bib'})
             .reset_index(drop=True)
         )
 
-        # Normalize the dictionary contents and combine with team_bib
+        # Normalize the dictionary contents and combine with team.bib
         competitors_df = pd.concat([
-            competitors_df['team_bib'],
+            competitors_df['team.bib'],
             pd.json_normalize(competitors_df['team.competitors'])
         ], axis=1)
 
         # Align column names with an ealier Dakar analysis codebase
         competitors_df["Year"] = year
         competitors_df.rename(
-            columns={'team.bib': 'Bib', 'name': 'Name'}, inplace=True)
+            columns={'name': 'Name'}, inplace=True)
         
         # Create teams DataFrame by dropping the competitors column
         teams_df = df.drop('team.competitors', axis=1)
         team_cols = [c for c in teams_df.columns if c.startswith(
             "team")]
         teams_df = teams_df[team_cols]
-        teams_df.rename(columns={'team.bib': 'Bib'}, inplace=True)
 
         team_cols.remove("team.bib")
         team_cols.append("team.competitors")
-        return teams_df, competitors_df, df.rename(columns={'team.bib': 'Bib'}).drop(team_cols, axis=1)
+        return teams_df, competitors_df, df.drop(team_cols, axis=1)
 
     def _get_url(self, template: str, **kwargs) -> str:
         """Construct API URL from template."""
@@ -436,8 +434,8 @@ class DakarAPIClient:
         id_column = "_id"
         point_cols = [col for col in _results.columns if col.startswith(('cg', 'cs'))]
         # Melt only the point-specific columns
-        melted = _results[[id_column, "Bib", *point_cols]
-                        ].melt(id_vars=[id_column, "Bib"]).dropna()
+        melted = _results[[id_column, "team.bib", *point_cols]
+                        ].melt(id_vars=[id_column, "team.bib"]).dropna()
         melted = melted[melted['variable'].str.contains('position|absolute|relative')]
         melted["type"] = melted["variable"].str.split('.').str[0]
         melted["waypoint"] = melted["variable"].str.extract(r'\.([^\.]+)\.')
