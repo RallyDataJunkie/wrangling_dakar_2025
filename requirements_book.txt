@@ -12,3 +12,4 @@ folium
 jupyterlite-simple-cors-proxy
 montydb
 fastparquet
+sqlite-utils
