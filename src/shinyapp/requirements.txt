@@ -1,6 +1,7 @@
 seaborn
 shiny
 jupyterlite-simple-cors-proxy
+requests
 requests-cache
 attrs
 cattrs
