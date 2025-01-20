@@ -44,6 +44,7 @@ jobs:
          python -m pip install -r requirements_shiny.txt
          cd ./src
          shinylive export shinyapp shinysite
+         mkdir -p ../dist/shinylive
          cp -r ./shinysite/* ../dist/shinylive/
 
       - name: Upload artifact
