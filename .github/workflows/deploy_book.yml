@@ -29,7 +29,7 @@ jobs:
           cp ./src/*.ipynb ./content/
           cp -r src/images/ content/
           cp -r src/dakar_rallydj/ content/
-          jupyter lite build --contents content --output-dir dist
+          jupyter lite build --contents content --output-dir dist --apps lab --apps voici -apps notebook
           touch ./dist/.nojekyll
   
       - name: Build the Jupyter Book site
@@ -38,15 +38,6 @@ jobs:
           jupyter-book build ./src
           mkdir -p ./dist/book
           cp -r ./src/_build/html/* ./dist/book/
-
-      - name: Setup Voici
-        run: |
-          python -m pip install -r requirements_voici.txt
-          mkdir -p ./dist/voici
-
-#      - name: Build the Voici site
-#        shell: bash -l {0}
-#        run: voici build --contents content/72_stage_surfaces-dashboard.ipynb --output-dir ./dist/voici
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
