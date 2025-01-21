@@ -1,5 +1,6 @@
 import pandas as pd
 
+# Should there be an inplace=True variant of this?
 def derive_clazz_metadata(x_df, clazz_df, groups_df, x_cols=None):
     x_cols = ["team.bib", "team.clazz"] if x_cols is None or not (isinstance(x_cols, list) and len(x_cols)==2) else x_cols
     clazz_map_df = pd.merge(x_df[x_cols], clazz_df[[
@@ -11,5 +12,6 @@ def derive_clazz_metadata(x_df, clazz_df, groups_df, x_cols=None):
     # Reorder and reindex. Or should we leave it?
     clazz_map_df.sort_values("team.bib", inplace=True)
     clazz_map_df.reset_index(drop=True, inplace=True)
-
+    
     return clazz_map_df
+

@@ -99,10 +99,7 @@ class DakarAPIClient:
             pd.json_normalize(competitors_df['team.competitors'])
         ], axis=1)
 
-        # Align column names with an ealier Dakar analysis codebase
-        competitors_df["Year"] = year
-        competitors_df.rename(
-            columns={'name': 'Name'}, inplace=True)
+        competitors_df["year"] = year
         
         # Create teams DataFrame by dropping the competitors column
         teams_df = df.drop('team.competitors', axis=1)
@@ -241,10 +238,13 @@ class DakarAPIClient:
         stage_code = waypoint_df.iloc[0]["_origin"]
 
         waypoint_df = pd.json_normalize(waypoint_df["waypoints"].explode())
-        waypoint_df["Year"] = year
+        waypoint_df["year"] = year
         waypoint_df["stage"] = stage
-        waypoint_df["Category"] = category
+        waypoint_df["category"] = category
         waypoint_df["stage_code"] = stage_code
+
+        # Tidy up df
+        waypoint_df.drop(columns=["groups"], inplace=True)
 
         self._coldropper(waypoint_df, ["isFirstDss"])
         waypoint_df.sort_values(by=["stage", "checkpoint"], inplace=True)
@@ -401,6 +401,7 @@ class DakarAPIClient:
         stage_df = self.mergeInLangLabels(
             stage_df, "stageLangs", key="variable")
         stage_df['stage_code'] = stage_df['code']
+        stage_df["stage"] = stage_df["stage"].astype(int)
         stage_df.sort_values("startDate", inplace=True)
         stage_df.reset_index(drop=True, inplace=True)
 
@@ -430,14 +431,71 @@ class DakarAPIClient:
         return stage_df, sectors_df, stage_surfaces, section_surfaces, surfaces
 
     @staticmethod
-    def long_results(_results: pd.DataFrame) -> pd.DataFrame:
+    def long_results_ce(_results: pd.DataFrame) -> pd.DataFrame:
+        id_column = "_id"
+        ce_cols = [col for col in _results.columns if col.startswith('ce')]
+
+        melted_ce = _results[[id_column, "team.bib", *ce_cols]].copy()
+        melted_ce['ce.bonus'] = melted_ce['ce.bonus'].astype(object)
+        melted_ce.loc[:, "ce.bonus"] = melted_ce['ce.bonus'].apply(lambda x: [x, x])
+        melted_ce = melted_ce.melt(id_vars=[id_column, "team.bib"]).dropna()
+        melted_ce = melted_ce.dropna(subset=['value'])
+        melted_ce = melted_ce[melted_ce['variable'].str.contains(
+            'position|absolute|relative`|bonus')]
+        melted_ce["metric"] = melted_ce["variable"].str.split('.').str[-1]
+        melted_ce[['value_0', 'value_1']] = pd.DataFrame(
+            melted_ce['value'].tolist(),
+            index=melted_ce.index
+        )
+
+        melted_ce.drop(columns=["variable", "value"], inplace=True)
+        melted_ce[["value_0", "value_1"]] = melted_ce[[
+            "value_0", "value_1"]].astype(float)
+        melted_ce.loc[melted_ce["metric"].isin(["absolute", "relative"]), [
+            "value_0", "value_1"]] /= 1000
+        melted_ce[["value_0", "value_1"]] = melted_ce[[
+            "value_0", "value_1"]]#.astype(int)
+
+        dss_cols = [col for col in _results.columns if col.startswith('dss')]
+
+        melted_dss = _results[[id_column, "team.bib", *dss_cols]].copy()
+        melted_dss = melted_dss.melt(id_vars=[id_column, "team.bib"]).dropna()
+
+        melted_dss = melted_dss[melted_dss['variable'].str.contains(
+            'position|absolute')]
+        melted_dss["metric"] = melted_dss["variable"].str.split('.').str[-1]
+        melted_dss = melted_dss.dropna(subset=['value'])
+        melted_dss.drop(columns=["variable"], inplace=True)
+        melted_dss["value_0"] = melted_dss["value"].astype(float)
+        melted_dss.loc[melted_dss["metric"].isin(["absolute"]), [
+            "value_0"]] /= 1000
+        melted_dss["value_0"] = melted_dss[
+            "value_0"]#.astype(int)
+        melted_dss["value_1"] = melted_dss[
+            "value_0"]
+        melted_dss.drop(columns="value", inplace=True)
+
+        melted_ce = pd.concat([melted_ce, melted_dss], ignore_index=True)
+        melted_ce[['year', 'category', 'stage']] = melted_ce['_id'].str.extract(
+            r'lastScore-(\d{4})-([A-Z])-([\d]+)')
+        melted_ce = melted_ce.dropna(subset="value_0")
+        melted_ce[["value_0", "value_1"]] = melted_ce[
+            ["value_0", "value_1"]].astype(int)
+        return melted_ce
+    
+    @staticmethod
+    def long_results_cg(_results: pd.DataFrame) -> pd.DataFrame:
         id_column = "_id"
         point_cols = [col for col in _results.columns if col.startswith(('cg', 'cs'))]
         # Melt only the point-specific columns
         melted = _results[[id_column, "team.bib", *point_cols]
                         ].melt(id_vars=[id_column, "team.bib"]).dropna()
+        # The variable is a stuctured field, e.g. cg.01216.position
+        # The form is: {TYPE}.{WAYPOINT}.{METRIC}
         melted = melted[melted['variable'].str.contains('position|absolute|relative')]
+        # Extract based on splitting the string
         melted["type"] = melted["variable"].str.split('.').str[0]
+        # Alternatively, we could use a regular expression
         melted["waypoint"] = melted["variable"].str.extract(r'\.([^\.]+)\.')
         melted["metric"] = melted["variable"].str.split('.').str[-1]
 
@@ -445,7 +503,24 @@ class DakarAPIClient:
             melted['value'].tolist(),
             index=melted.index
         )
-        melted.drop(columns=["value"], inplace=True)
+
+        melted[["value_0", "value_1"]] = melted[["value_0", "value_1"]].astype(float)
+        # Times are in milliseconds; make them more natural as seconds
+        melted.loc[melted["metric"].isin(["absolute", "relative"]), [
+            "value_0", "value_1"]] /= 1000
+        melted[["value_0", "value_1"]] = melted[[
+            "value_0", "value_1"]].astype(int)
+    
+        # Tidy the dataframe of columns we have processed
+        melted.drop(columns=["variable", "value"], inplace=True)
+
+        # Extract out the year, category and stage from the _id
+        # (e.g. lastScore-2025-A-1-427) which has the form:
+        # lastScore-YEAR-CATEGORY-STAGE-BIB
+        melted[['year', 'category', 'stage']] = melted['_id'].str.extract(r'lastScore-(\d{4})-([A-Z])-([\d]+)')
+        melted['year'] = melted['year'].astype(int)
+        melted['stage'] = melted['stage'].astype(int)
+
         return melted
 
     def get_scores(self, year: Optional[int] = None,
@@ -463,9 +538,10 @@ class DakarAPIClient:
 
         teams_df, competitors_df, _results_df = self.normalize_team_competitors(_results_df)
 
-        long_results_df = self.long_results(_results_df)
+        long_results_df = self.long_results_cg(_results_df)
+        long_results2_df = self.long_results_ce(_results_df)
 
-        return long_results_df, teams_df, competitors_df
+        return long_results_df, long_results2_df, teams_df, competitors_df
 
     def _get_request_proxy(self, use_cache: Optional[bool], **cache_kwargs) -> CorsProxy:
         """Get appropriate proxy for the request based on cache settings."""
