@@ -456,6 +456,7 @@ class DakarAPIClient:
             "value_0", "value_1"]] /= 1000
         melted_ce[["value_0", "value_1"]] = melted_ce[[
             "value_0", "value_1"]]  # .astype(int)
+        melted_ce["type"] = "ce"
 
         dss_cols = [col for col in _results.columns if col.startswith('dss')]
 
@@ -475,6 +476,7 @@ class DakarAPIClient:
         melted_dss["value_1"] = melted_dss[
             "value_0"]
         melted_dss.drop(columns="value", inplace=True)
+        melted_dss["type"] = "dss"
 
         melted_ce = pd.concat([melted_ce, melted_dss], ignore_index=True)
         melted_ce[['year', 'category', 'stage']] = melted_ce['_id'].str.extract(
