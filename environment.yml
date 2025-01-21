@@ -14,6 +14,7 @@ dependencies:
   - seaborn
   - scikit-learn
   - folium
+  - sqlite_utils
   - pip:
     - jupyterlite-simple-cors-proxy
     - montydb
